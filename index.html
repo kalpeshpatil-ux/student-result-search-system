@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="College Project Model: Student Result Search System comparing Linear Search vs Binary Search performance on sorted roll numbers with interactive visualizer, live benchmarks, and student result cards.">
+  <title>Student Result Search System | Linear vs Binary Search Performance Model</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for High Performance Benchmark Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-sphere glow-sphere-1" aria-hidden="true"></div>
+  <div class="glow-sphere glow-sphere-2" aria-hidden="true"></div>
+  <div class="glow-sphere glow-sphere-3" aria-hidden="true"></div>
+
+  <!-- Main Application Wrapper -->
+  <div class="app-container">
+    
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="header-branding">
+        <div class="badge-tag">
+          <span class="badge-dot"></span>
+          <span>College Project Demonstration Model</span>
+        </div>
+        <h1 class="main-title">Student Result Search System</h1>
+        <p class="subtitle">Empirical and Visual Performance Comparison: <strong>Linear Search <em>O(n)</em></strong> vs <strong>Binary Search <em>O(log n)</em></strong> on Sorted Roll Numbers</p>
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-pill" title="Current dataset size loaded in memory">
+          <span class="stat-icon">🎓</span>
+          <div>
+            <div class="stat-label">Active Records</div>
+            <div class="stat-value" id="header-records-count">1,000 Students</div>
+          </div>
+        </div>
+        <div class="stat-pill" title="Sorted order requirement for binary search">
+          <span class="stat-icon">🔢</span>
+          <div>
+            <div class="stat-label">Roll Numbers</div>
+            <div class="stat-value text-emerald">Strictly Sorted ↑</div>
+          </div>
+        </div>
+        <button id="sound-toggle-btn" class="icon-toggle-btn" title="Toggle audio sound effects on search steps">
+          <span id="sound-icon">🔊</span>
+          <span id="sound-status">Sound ON</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Navigation Tabs -->
+    <nav class="navigation-bar" aria-label="Project Navigation Tabs">
+      <div class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-tab="visualizer" role="tab" aria-selected="true" id="tab-btn-visualizer">
+          <span class="tab-icon">⚡</span>
+          <span>Interactive Visualizer</span>
+        </button>
+        <button class="nav-tab" data-tab="benchmark" role="tab" aria-selected="false" id="tab-btn-benchmark">
+          <span class="tab-icon">📈</span>
+          <span>Benchmarks & Charts</span>
+        </button>
+        <button class="nav-tab" data-tab="directory" role="tab" aria-selected="false" id="tab-btn-directory">
+          <span class="tab-icon">📋</span>
+          <span>Student Directory & CSV</span>
+        </button>
+        <button class="nav-tab" data-tab="theory" role="tab" aria-selected="false" id="tab-btn-theory">
+          <span class="tab-icon">🧠</span>
+          <span>Complexity & Theory</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- TAB 1: INTERACTIVE VISUALIZER -->
+    <section id="tab-visualizer" class="tab-content active" role="tabpanel">
+      
+      <!-- Visualizer Control Deck -->
+      <div class="panel control-deck">
+        <div class="control-row">
+          
+          <!-- Target Input Group -->
+          <div class="control-group target-group">
+            <label for="target-roll-input" class="control-label">Target Roll Number:</label>
+            <div class="input-with-button">
+              <input type="number" id="target-roll-input" class="text-input" placeholder="e.g. 1025" min="1001">
+              <button id="search-instant-btn" class="btn btn-secondary" title="Search without stepping">Instant Search</button>
+            </div>
+            <!-- Quick Preset Badges -->
+            <div class="quick-presets">
+              <span class="preset-label">Presets:</span>
+              <button class="preset-pill" data-preset="first" title="Target at index 0 (Linear Best Case)">First (1001)</button>
+              <button class="preset-pill" data-preset="mid" title="Target at middle index (Binary Best Case)">Mid (~Median)</button>
+              <button class="preset-pill" data-preset="last" title="Target at last index (Linear Worst Case)">Last</button>
+              <button class="preset-pill" data-preset="missing" title="Target not present (Worst Case for Both)">Absent (9999)</button>
+              <button class="preset-pill" data-preset="random" title="Random roll number">🎲 Random</button>
+            </div>
+          </div>
+
+          <!-- Visual Matrix Settings -->
+          <div class="control-group config-group">
+            <div class="config-item">
+              <label for="visual-size-select" class="control-label">Visual Card Count:</label>
+              <select id="visual-size-select" class="select-input">
+                <option value="16">16 Students (Detailed View)</option>
+                <option value="32" selected>32 Students (Standard)</option>
+                <option value="50">50 Students (Wide Arena)</option>
+                <option value="80">80 Students (Dense Grid)</option>
+              </select>
+            </div>
+
+            <div class="config-item">
+              <label for="speed-slider" class="control-label">Step Speed: <span id="speed-label" class="speed-val">400ms</span></label>
+              <input type="range" id="speed-slider" min="80" max="1200" step="40" value="400" class="range-slider">
+            </div>
+          </div>
+
+          <!-- Playback Actions -->
+          <div class="control-group playback-group">
+            <label class="control-label">Visual Simulation Controls:</label>
+            <div class="action-buttons-wrap">
+              <button id="start-simulation-btn" class="btn btn-primary">
+                <span class="btn-icon">▶</span> Run Simultaneous Search
+              </button>
+              <button id="step-simulation-btn" class="btn btn-neutral">
+                <span class="btn-icon">⏭</span> Step
+              </button>
+              <button id="pause-simulation-btn" class="btn btn-neutral" disabled>
+                <span class="btn-icon">⏸</span> Pause
+              </button>
+              <button id="reset-simulation-btn" class="btn btn-ghost">
+                <span class="btn-icon">↺</span> Reset
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Comparison Winner Card (Revealed after search completion) -->
+      <div id="winner-banner" class="winner-banner hidden">
+        <div class="winner-trophy">🏆</div>
+        <div class="winner-details">
+          <div class="winner-title" id="winner-title">Binary Search is the Clear Winner!</div>
+          <div class="winner-subtitle" id="winner-subtitle">Completed in 4 comparisons vs 28 comparisons in Linear Search. That's a 7.0x efficiency advantage!</div>
+        </div>
+        <div class="winner-actions">
+          <button id="view-card-from-banner-btn" class="btn btn-success">View Student Result Card</button>
+        </div>
+      </div>
+
+      <!-- Side-by-Side Dual Arena -->
+      <div class="arenas-grid">
+        
+        <!-- ARENA 1: LINEAR SEARCH TRACK -->
+        <div class="arena-card linear-arena">
+          <div class="arena-header">
+            <div class="arena-title-wrap">
+              <span class="algo-badge linear-tag">O(n) Sequential</span>
+              <h2 class="arena-heading">Linear Search Arena</h2>
+            </div>
+            <div class="arena-status-pill" id="linear-status-badge">Ready to Scan</div>
+          </div>
+
+          <!-- Linear Performance Live HUD -->
+          <div class="arena-hud">
+            <div class="hud-stat">
+              <span class="hud-stat-label">Comparisons</span>
+              <span class="hud-stat-val text-linear" id="linear-comparisons-count">0</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Current Index</span>
+              <span class="hud-stat-val" id="linear-current-index">-</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Inspected Roll</span>
+              <span class="hud-stat-val" id="linear-inspected-val">-</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Time</span>
+              <span class="hud-stat-val" id="linear-time-hud">0.00 µs</span>
+            </div>
+          </div>
+
+          <!-- Linear Log Bubble -->
+          <div class="arena-log-bubble" id="linear-log-message">
+            Click <strong>Run Simultaneous Search</strong> or <strong>Step</strong> to inspect elements left to right.
+          </div>
+
+          <!-- Linear Visual Array Grid -->
+          <div class="array-container">
+            <div class="array-label">Student Roll Number Array (Indices 0 to <span id="linear-max-idx">31</span>):</div>
+            <div class="cards-grid" id="linear-cards-container">
+              <!-- Dynamically populated student cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ARENA 2: BINARY SEARCH TRACK -->
+        <div class="arena-card binary-arena">
+          <div class="arena-header">
+            <div class="arena-title-wrap">
+              <span class="algo-badge binary-tag">O(log n) Divide & Conquer</span>
+              <h2 class="arena-heading">Binary Search Arena</h2>
+            </div>
+            <div class="arena-status-pill" id="binary-status-badge">Ready to Halve</div>
+          </div>
+
+          <!-- Binary Performance Live HUD -->
+          <div class="arena-hud">
+            <div class="hud-stat">
+              <span class="hud-stat-label">Comparisons</span>
+              <span class="hud-stat-val text-binary" id="binary-comparisons-count">0</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Active Range</span>
+              <span class="hud-stat-val" id="binary-range-hud">[0 .. 31]</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Mid Roll</span>
+              <span class="hud-stat-val text-gold" id="binary-mid-val">-</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-stat-label">Time</span>
+              <span class="hud-stat-val" id="binary-time-hud">0.00 µs</span>
+            </div>
+          </div>
+
+          <!-- Binary Step Reasoning Bubble -->
+          <div class="arena-log-bubble binary-bubble" id="binary-log-message">
+            Binary Search evaluates the middle item and cuts the remaining search space by <strong>50%</strong> each step.
+          </div>
+
+          <!-- Binary Visual Array Grid with Low, Mid, High pointers -->
+          <div class="array-container">
+            <div class="array-label">
+              Active Range: <span class="pointer-legend"><span class="legend-dot cyan"></span>Low</span>
+              <span class="pointer-legend"><span class="legend-dot gold"></span>Mid</span>
+              <span class="pointer-legend"><span class="legend-dot purple"></span>High</span>
+              <span class="pointer-legend"><span class="legend-dot grey"></span>Discarded Half</span>
+            </div>
+            <div class="cards-grid" id="binary-cards-container">
+              <!-- Dynamically populated student cards with pointers -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Student Result Card Preview Section (Embedded below arena) -->
+      <div id="result-card-section" class="panel result-card-panel hidden">
+        <div class="result-card-header-bar">
+          <div class="header-card-title">
+            <span class="result-icon">📜</span>
+            <span>Retrieved Student Result Record</span>
+          </div>
+          <div class="result-actions">
+            <button id="print-result-card-btn" class="btn btn-secondary btn-sm">🖨️ Print Result Card</button>
+            <button id="close-result-card-btn" class="btn btn-ghost btn-sm">✕ Close Card</button>
+          </div>
+        </div>
+
+        <div id="student-result-card-body" class="student-certificate-card">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: PERFORMANCE BENCHMARK & ANALYTICS -->
+    <section id="tab-benchmark" class="tab-content" role="tabpanel">
+      
+      <div class="panel benchmark-control-panel">
+        <div class="benchmark-info-header">
+          <div>
+            <h2 class="section-heading">Empirical Performance Benchmark Suite</h2>
+            <p class="section-desc">Run rigorous search benchmarks across dataset sizes: <strong>100, 1,000, 10,000, and 100,000</strong> records. Measures exact comparison operations and execution latency in microseconds (µs).</p>
+          </div>
+          <div class="benchmark-actions">
+            <button id="run-benchmark-btn" class="btn btn-primary">
+              <span class="btn-icon">⚡</span> Run Live Benchmark Suite
+            </button>
+            <button id="load-reference-benchmark-btn" class="btn btn-secondary">
+              Load Reference Python Benchmark
+            </button>
+          </div>
+        </div>
+
+        <div id="benchmark-progress-bar-wrap" class="progress-wrap hidden">
+          <div class="progress-info">
+            <span id="benchmark-progress-text">Executing test trials across sizes...</span>
+            <span id="benchmark-progress-pct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="benchmark-progress-fill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benchmark Charts Grid -->
+      <div class="charts-grid">
+        
+        <!-- Chart 1: Comparisons vs Input Size -->
+        <div class="panel chart-card">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title">Input Size (N) vs Average Comparisons</h3>
+              <p class="chart-subtitle">Empirical test of O(n) linear growth vs O(log n) logarithmic flattening</p>
+            </div>
+            <div class="chart-badge">Logarithmic X-Axis</div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="comparisonsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Execution Time (µs) vs Input Size -->
+        <div class="panel chart-card">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title">Input Size (N) vs Execution Time (µs)</h3>
+              <p class="chart-subtitle">Direct hardware CPU latency comparison measured using high-precision performance timers</p>
+            </div>
+            <div class="chart-badge">Logarithmic X & Y Scale</div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="timeChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Benchmark Summary Table -->
+      <div class="panel table-panel">
+        <div class="table-header-wrap">
+          <h3 class="table-title">Empirical Benchmark Summary Data (1,004 Searches per Size)</h3>
+          <button id="export-benchmark-csv-btn" class="btn btn-secondary btn-sm">📥 Export Table to CSV</button>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="benchmark-table">
+            <thead>
+              <tr>
+                <th>Dataset Size (N)</th>
+                <th>Test Queries</th>
+                <th>Linear Avg Comparisons</th>
+                <th>Binary Avg Comparisons</th>
+                <th>Comparison Reduction</th>
+                <th>Linear Avg Time (µs)</th>
+                <th>Binary Avg Time (µs)</th>
+                <th>Speedup Factor</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-table-body">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: STUDENT DIRECTORY & CSV -->
+    <section id="tab-directory" class="tab-content" role="tabpanel">
+      
+      <div class="panel directory-controls">
+        <div class="directory-control-row">
+          
+          <!-- Search in directory -->
+          <div class="dir-search-wrap">
+            <label for="directory-search-input" class="control-label">Search in Records:</label>
+            <input type="text" id="directory-search-input" class="text-input" placeholder="Search by Roll No or Student Name...">
+          </div>
+
+          <!-- Grade Filter -->
+          <div class="dir-filter-wrap">
+            <label for="grade-filter-select" class="control-label">Grade Filter:</label>
+            <select id="grade-filter-select" class="select-input">
+              <option value="ALL">All Grades</option>
+              <option value="A+">Grade A+ (>=90%)</option>
+              <option value="A">Grade A (80-89%)</option>
+              <option value="B">Grade B (70-79%)</option>
+              <option value="C">Grade C (60-69%)</option>
+              <option value="D">Grade D (50-59%)</option>
+              <option value="E">Grade E (&lt;50%)</option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="dir-filter-wrap">
+            <label for="status-filter-select" class="control-label">Result Status:</label>
+            <select id="status-filter-select" class="select-input">
+              <option value="ALL">All Statuses</option>
+              <option value="Pass">Pass Only</option>
+              <option value="Fail">Fail Only</option>
+            </select>
+          </div>
+
+          <!-- Dataset Generator Options -->
+          <div class="dir-actions-wrap">
+            <label class="control-label">Dataset Operations:</label>
+            <div class="action-buttons-wrap">
+              <button id="generate-1k-btn" class="btn btn-secondary btn-sm">Generate 1,000</button>
+              <button id="generate-10k-btn" class="btn btn-secondary btn-sm">Generate 10,000</button>
+              <button id="export-csv-btn" class="btn btn-primary btn-sm">📥 Export CSV</button>
+              <label for="csv-file-input" class="btn btn-neutral btn-sm file-upload-label">
+                📤 Import CSV
+                <input type="file" id="csv-file-input" accept=".csv" class="hidden-file-input">
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Student Directory Table -->
+      <div class="panel table-panel">
+        <div class="directory-table-meta">
+          <div>Showing <span id="dir-showing-count">0</span> of <span id="dir-total-count">0</span> records</div>
+          <div class="pagination-controls">
+            <button id="prev-page-btn" class="btn btn-ghost btn-sm" disabled>« Previous</button>
+            <span id="page-indicator" class="page-num">Page 1 / 1</span>
+            <button id="next-page-btn" class="btn btn-ghost btn-sm">Next »</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="directory-table">
+            <thead>
+              <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Python</th>
+                <th>Data Structures</th>
+                <th>Mathematics</th>
+                <th>Electronics</th>
+                <th>Comm. Skills</th>
+                <th>Total (500)</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="directory-table-body">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 4: COMPLEXITY & THEORY (VIVA GUIDE) -->
+    <section id="tab-theory" class="tab-content" role="tabpanel">
+      
+      <!-- Interactive Mathematical Calculator -->
+      <div class="panel math-calc-panel">
+        <div class="calc-header">
+          <div class="calc-icon">🧮</div>
+          <div>
+            <h2 class="section-heading">Interactive Logarithmic vs Linear Scaling Calculator</h2>
+            <p class="section-desc">Type any dataset size (N) to observe the theoretical worst-case maximum comparisons required:</p>
+          </div>
+        </div>
+
+        <div class="calc-interaction-row">
+          <div class="calc-input-box">
+            <label for="calc-n-input" class="control-label">Input Number of Records (N):</label>
+            <input type="number" id="calc-n-input" class="text-input" value="100000" min="1" max="1000000000000">
+            <div class="calc-quick-buttons">
+              <button class="calc-chip" data-n="100">100</button>
+              <button class="calc-chip" data-n="1000">1,000</button>
+              <button class="calc-chip" data-n="10000">10,000</button>
+              <button class="calc-chip" data-n="100000">100,000</button>
+              <button class="calc-chip" data-n="1000000">1 Million</button>
+              <button class="calc-chip" data-n="1000000000">1 Billion</button>
+            </div>
+          </div>
+
+          <div class="calc-results-grid">
+            <div class="calc-card linear-result-card">
+              <div class="calc-card-title">Linear Search O(n)</div>
+              <div class="calc-card-metric" id="calc-linear-res">100,000</div>
+              <div class="calc-card-formula">Formula: T_worst = N</div>
+              <div class="calc-card-desc">Must check every single element when target is at the end or absent.</div>
+            </div>
+
+            <div class="calc-card binary-result-card">
+              <div class="calc-card-title">Binary Search O(log₂ n)</div>
+              <div class="calc-card-metric text-emerald" id="calc-binary-res">17 Steps</div>
+              <div class="calc-card-formula">Formula: T_worst = ⌈log₂(N+1)⌉</div>
+              <div class="calc-card-desc">Halves search space at every step; 17 comparisons solve 100,000 items!</div>
+            </div>
+
+            <div class="calc-card ratio-result-card">
+              <div class="calc-card-title">Theoretical Speedup</div>
+              <div class="calc-card-metric text-gold" id="calc-ratio-res">5,882x</div>
+              <div class="calc-card-formula">Ratio: N / ⌈log₂(N+1)⌉</div>
+              <div class="calc-card-desc">Orders of magnitude faster on large academic institutions or database indexes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theoretical Complexity Matrix -->
+      <div class="panel complexity-matrix-panel">
+        <h3 class="section-heading">Theoretical Big-O Complexity Comparison Matrix</h3>
+        <p class="section-desc">Standard reference for college project evaluations, viva questions, and technical report writing:</p>
+
+        <div class="table-responsive">
+          <table class="data-table complexity-table">
+            <thead>
+              <tr>
+                <th>Search Algorithm</th>
+                <th>Best Case</th>
+                <th>Average Case</th>
+                <th>Worst Case</th>
+                <th>Auxiliary Space</th>
+                <th>Precondition</th>
+                <th>Data Structure</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Linear Search (Sequential)</strong></td>
+                <td><span class="badge badge-green">O(1)</span><br><small>Target at index 0</small></td>
+                <td><span class="badge badge-yellow">O(n/2) = O(n)</span><br><small>Average n/2 scans</small></td>
+                <td><span class="badge badge-red">O(n)</span><br><small>Target at end / absent</small></td>
+                <td><span class="badge badge-blue">O(1)</span><br><small>Iterative in-place</small></td>
+                <td>None (Works on unsorted arrays)</td>
+                <td>Arrays, Linked Lists, Streams</td>
+              </tr>
+              <tr>
+                <td><strong>Binary Search (Iterative)</strong></td>
+                <td><span class="badge badge-green">O(1)</span><br><small>Target at middle index</small></td>
+                <td><span class="badge badge-emerald">O(log₂ n)</span><br><small>Logarithmic halving</small></td>
+                <td><span class="badge badge-emerald">O(log₂ n)</span><br><small>Target absent / leaf</small></td>
+                <td><span class="badge badge-blue">O(1)</span><br><small>3 pointers: low, mid, high</small></td>
+                <td><span class="text-amber"><strong>Strictly Sorted Dataset</strong></span></td>
+                <td>Direct random access (Arrays, Vectors)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- College Viva Q&A Accordion -->
+      <div class="panel viva-panel">
+        <h3 class="section-heading">Frequently Asked Viva Questions (Oral Examination Prep)</h3>
+        
+        <div class="faq-accordion">
+          <div class="faq-item">
+            <details open>
+              <summary class="faq-question">Q1: Why does Binary Search strictly require the roll numbers to be sorted?</summary>
+              <div class="faq-answer">
+                <p>Binary Search relies on the <strong>monotonic order property</strong>. When comparing target <code>key</code> with <code>arr[mid]</code>, if <code>arr[mid] &lt; key</code>, we can only guarantee that all elements to the left (<code>0 .. mid</code>) are also smaller than <code>key</code> if and only if the array is sorted. If unsorted, the target could be hiding in either half, breaking the divide-and-conquer strategy.</p>
+              </div>
+            </details>
+          </div>
+
+          <div class="faq-item">
+            <details>
+              <summary class="faq-question">Q2: When would you ever prefer Linear Search over Binary Search in real-world engineering?</summary>
+              <div class="faq-answer">
+                <p>1. <strong>Unsorted Data with Infrequent Searches:</strong> Sorting an unsorted array takes <em>O(n log n)</em> time. If you only search once or twice, doing a linear search <em>O(n)</em> is much faster than sorting first.<br>
+                2. <strong>Very Small Arrays (N &lt; 20):</strong> Cache locality, absence of branch mispredictions, and simple loop overhead make Linear Search competitive or faster on tiny sets.<br>
+                3. <strong>Linked Lists:</strong> Binary search requires <em>O(1)</em> random access (<code>arr[mid]</code>). Linked lists require <em>O(n)</em> traversal just to reach the midpoint.</p>
+              </div>
+            </details>
+          </div>
+
+          <div class="faq-item">
+            <details>
+              <summary class="faq-question">Q3: How do you prevent integer overflow when calculating the midpoint?</summary>
+              <div class="faq-answer">
+                <p>In languages like C, C++, and Java with fixed 32-bit integers, calculating <code>mid = (low + high) / 2</code> can overflow if <code>low + high &gt; 2,147,483,647</code>. The safe calculation is: <code>mid = low + ((high - low) / 2)</code>.</p>
+              </div>
+            </details>
+          </div>
+
+          <div class="faq-item">
+            <details>
+              <summary class="faq-question">Q4: What is the space complexity difference between Iterative and Recursive Binary Search?</summary>
+              <div class="faq-answer">
+                <p>Iterative Binary Search uses <strong>O(1)</strong> auxiliary space since it only maintains three pointer variables (<code>low</code>, <code>mid</code>, <code>high</code>). Recursive Binary Search allocates a new call frame on the execution call stack at each division, resulting in <strong>O(log n)</strong> stack space.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Global Result Card Modal (Triggerable from Directory or Search) -->
+    <div id="result-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-title">Student Result Certificate</div>
+          <button id="modal-close-btn" class="modal-close-icon" aria-label="Close Modal">✕</button>
+        </div>
+        <div class="modal-content" id="modal-card-content">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button id="modal-print-btn" class="btn btn-secondary">🖨️ Print Certificate</button>
+          <button id="modal-dismiss-btn" class="btn btn-neutral">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <div><strong>Student Result Search System</strong> — College Mini Project Model</div>
+        <div class="footer-meta">Algorithms: Sequential Linear Scan vs Divide-and-Conquer Binary Search | Roll Numbers 1001+</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
